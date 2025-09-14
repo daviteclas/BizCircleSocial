@@ -13,6 +13,7 @@ import { GuestProfileScreen } from './components/GuestProfileScreen';
 import { LoginScreen } from './components/LoginScreen';
 import { ProfileScreen } from './components/ProfileScreen';
 import { SearchScreen } from './components/SearchScreen';
+import { SignupScreen } from './components/SignupScreen';
 import { useAuth } from './context/AuthContext';
 
 // Um componente simples para telas bloqueadas
@@ -47,8 +48,11 @@ export default function MainNavigator() {
 
   useEffect(() => {
     async function initialize() {
+    //   await updateDatabaseSchema(); 
+
     //   await resetDatabase(); 
       await setupDatabase();
+      
       const [dealsFromDb, usersFromDb] = await Promise.all([getDeals(), getUsers()]);
       setBusinessDeals(dealsFromDb);
       setAllUsers(usersFromDb);
@@ -56,6 +60,7 @@ export default function MainNavigator() {
     }
     initialize();
   }, []);
+
 
   // Função para lidar com ações que um convidado não pode fazer
   const handleGuestAction = () => {
@@ -110,14 +115,13 @@ export default function MainNavigator() {
 
   // Se for convidado (ninguém logado)
   if (!currentUser) {
-    // A aba "Perfil" agora tem sua própria lógica de navegação
     if (currentPage === 'profile') {
         return (
             <SafeAreaView style={styles.safeArea}>
                 <StatusBar barStyle="light-content" />
                 {authPage === 'guest' && <GuestProfileScreen onNavigateToLogin={() => setAuthPage('login')} onNavigateToSignup={() => setAuthPage('signup')} />}
                 {authPage === 'login' && <LoginScreen onGoBack={() => setAuthPage('guest')} />}
-                {/* Adicionaremos a tela de Signup aqui depois */}
+                {authPage === 'signup' && <SignupScreen onGoBack={() => setAuthPage('guest')} />}
             </SafeAreaView>
         );
     }

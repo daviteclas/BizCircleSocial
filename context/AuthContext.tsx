@@ -1,4 +1,4 @@
-import { findUserByEmailAndPassword, getUserById } from '@/components/data/database';
+import { createUser, findUserByEmail, findUserByEmailAndPassword, getUserById } from '@/components/data/database';
 import { UserProfile } from '@/components/data/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
@@ -7,10 +7,10 @@ import React, { createContext, ReactNode, useContext, useEffect, useState } from
 // Define o que o nosso Contexto vai fornecer para os componentes
 interface AuthContextType {
   currentUser: UserProfile | null;
-  isLoading: boolean; // Para mostrar um loading inicial
+  isLoading: boolean;
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => Promise<void>;
-  // Adicionaremos a função de signup na próxima etapa
+  signup: (userData: Omit<UserProfile, 'id' | 'experiencePoints' | 'status'>) => Promise<{ success: boolean; message: string }>;
 }
 
 // Cria o Contexto com um valor inicial nulo
@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 // Cria o "Provedor" do nosso contexto. É ele que vai envolver o aplicativo.
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Começa carregando
+  const [isLoading, setIsLoading] = useState(true);
 
   // Este useEffect roda uma vez quando o app abre para verificar se há um usuário logado
   useEffect(() => {
@@ -27,7 +27,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const userId = await AsyncStorage.getItem('loggedUserId');
         if (userId) {
-          // Se encontramos um ID, buscamos os dados completos do usuário no BD
           const userFromDb = await getUserById(userId);
           if (userFromDb) {
             setCurrentUser(userFromDb);
@@ -44,30 +43,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const login = async (email: string, pass: string): Promise<boolean> => {
     const userFromDb = await findUserByEmailAndPassword(email, pass);
-
     if (userFromDb && userFromDb.status === 'approved') {
       setCurrentUser(userFromDb);
-      // Salva o ID do usuário no AsyncStorage para mantê-lo logado
       await AsyncStorage.setItem('loggedUserId', userFromDb.id);
       return true;
     }
-    
-    // Você pode adicionar lógicas aqui para avisar se o usuário está pendente, etc.
     return false;
   };
 
   // Função de Logout
   const logout = async () => {
     setCurrentUser(null);
-    // Remove o ID do AsyncStorage para deslogar
     await AsyncStorage.removeItem('loggedUserId');
   };
 
+  const signup = async (userData: Omit<UserProfile, 'id' | 'experiencePoints' | 'status'>): Promise<{ success: boolean; message: string }> => {
+    const existingUser = await findUserByEmail(userData.email);
+    if (existingUser) {
+      return { success: false, message: 'Este endereço de email já está em uso.' };
+    }
+
+    try {
+      const newUser: Omit<UserProfile, 'id'> = {
+        ...userData,
+        experiencePoints: 0,
+        status: 'pending',
+      };
+      await createUser(newUser);
+      // E tem um 'return' aqui
+      return { success: true, message: 'Cadastro enviado para análise! Você será notificado quando for aprovado.' };
+    } catch (error) {
+      console.error("Erro ao criar usuário:", error);
+      // E tem um 'return' aqui também
+      return { success: false, message: 'Ocorreu um erro ao realizar o cadastro.' };
+    }
+  };
+  
   const value = {
     currentUser,
     isLoading,
     login,
     logout,
+    signup, 
   };
 
 

@@ -21,7 +21,6 @@ export const LoginScreen = ({ onGoBack }: LoginScreenProps) => {
     if (!success) {
       Alert.alert("Falha no Login", "Email ou senha incorretos, ou seu cadastro ainda não foi aprovado.");
     }
-    // Se o login for bem-sucedido, o AuthContext irá automaticamente redirecionar o usuário.
   };
 
   return (

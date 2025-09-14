@@ -1,16 +1,17 @@
 import * as SQLite from 'expo-sqlite';
-import { mockBusinessDeals, mockUsers } from './mockData'; // Usado para popular o BD uma vez
+import { mockBusinessDeals, mockUsers } from './mockData';
 import { BusinessDeal, PostStatus, UserProfile } from './types';
 
-// Função para abrir o banco de dados. Se 'membersBook.db' não existir, ele será criado.
+// Tipo auxiliar para a forma como os dados vêm do banco (com hasChildren como número)
+type UserFromDB = Omit<UserProfile, 'hasChildren'> & { hasChildren: number };
+
 async function openDb() {
   return SQLite.openDatabaseAsync('membersBook.db');
 }
 
-// A função setupDatabase está correta e não precisa de alterações.
 export const setupDatabase = async () => {
   const db = await openDb();
-//   await db.execAsync('DROP TABLE deals; DROP TABLE users;');
+  
   await db.execAsync(`
     PRAGMA journal_mode = WAL;
     CREATE TABLE IF NOT EXISTS users (
@@ -91,12 +92,9 @@ export const getDeals = async (): Promise<BusinessDeal[]> => {
     await db.runAsync('UPDATE users SET experiencePoints = experiencePoints + ? WHERE id = ?', points, userId);
   };
   
-  // CORREÇÃO AQUI
   export const getUsers = async (): Promise<UserProfile[]> => {
       const db = await openDb();
-      // Especificamos que o resultado da query terá o campo 'hasChildren' como número
-      const allRows = await db.getAllAsync<Omit<UserProfile, 'hasChildren'> & { hasChildren: number }>('SELECT * FROM users ORDER BY experiencePoints DESC');
-      // Mapeamos o resultado, convertendo o campo 'hasChildren' para booleano
+      const allRows = await db.getAllAsync<UserFromDB>('SELECT * FROM users ORDER BY experiencePoints DESC');
       return allRows.map(row => ({
         ...row,
         hasChildren: row.hasChildren === 1,
@@ -106,24 +104,22 @@ export const getDeals = async (): Promise<BusinessDeal[]> => {
   export const resetDatabase = async () => {
     const db = await openDb();
     await db.withTransactionAsync(async () => {
-      await db.execAsync('DROP TABLE deals; DROP TABLE users;');
+      await db.execAsync('DROP TABLE IF EXISTS deals; DROP TABLE IF EXISTS users;');
       console.log("Banco de dados resetado. Recriando tabelas...");
     });
     await setupDatabase();
   };
   
-  // CORREÇÃO AQUI
   export const getUserById = async (userId: string): Promise<UserProfile | null> => {
     const db = await openDb();
-    const row = await db.getFirstAsync<Omit<UserProfile, 'hasChildren'> & { hasChildren: number }>('SELECT * FROM users WHERE id = ?', userId);
+    const row = await db.getFirstAsync<UserFromDB>('SELECT * FROM users WHERE id = ?', userId);
     if (!row) return null;
     return { ...row, hasChildren: row.hasChildren === 1 };
   };
   
-  // CORREÇÃO AQUI
   export const findUserByEmailAndPassword = async (email: string, pass: string): Promise<UserProfile | null> => {
     const db = await openDb();
-    const row = await db.getFirstAsync<Omit<UserProfile, 'hasChildren'> & { hasChildren: number }>(
+    const row = await db.getFirstAsync<UserFromDB>(
       'SELECT * FROM users WHERE email = ? AND password = ?',
       email.toLowerCase(), pass
     );
@@ -138,4 +134,35 @@ export const getDeals = async (): Promise<BusinessDeal[]> => {
           'INSERT INTO users (id, email, password, name, company, location, sector, avatar, bio, revenue, age, hasChildren, hobbies, experience, brands, role, classe, experiencePoints, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           id, userData.email, userData.password, userData.name, userData.company, userData.location, userData.sector, userData.avatar, userData.bio, userData.revenue, userData.age, userData.hasChildren ? 1: 0, userData.hobbies, userData.experience, userData.brands, userData.role, userData.classe, userData.experiencePoints, userData.status
       );
+  };
+  
+  export const updateDatabaseSchema = async () => {
+    const db = await openDb();
+    const expectedUserColumns = [
+      { name: 'email', type: 'TEXT UNIQUE' },
+      { name: 'password', type: 'TEXT' },
+      { name: 'status', type: 'TEXT' },
+      { name: 'classe', type: 'TEXT' },
+      { name: 'experiencePoints', type: 'INTEGER DEFAULT 0' },
+    ];
+    const existingColumnsResult = await db.getAllAsync("PRAGMA table_info(users);");
+    const existingColumnNames = existingColumnsResult.map((col: any) => col.name);
+    for (const column of expectedUserColumns) {
+      if (!existingColumnNames.includes(column.name)) {
+        try {
+          console.log(`Atualizando tabela 'users': Adicionando coluna '${column.name}'...`);
+          await db.execAsync(`ALTER TABLE users ADD COLUMN ${column.name} ${column.type}`);
+        } catch (error) {
+          console.warn(`Não foi possível adicionar a coluna ${column.name}. Pode já existir.`, error);
+        }
+      }
+    }
+    console.log("Verificação do schema do banco de dados concluída.");
+  };
+
+  export const findUserByEmail = async (email: string): Promise<UserProfile | null> => {
+    const db = await openDb();
+    const row = await db.getFirstAsync<UserFromDB>('SELECT * FROM users WHERE email = ?', email.toLowerCase());
+    if (!row) return null;
+    return { ...row, hasChildren: row.hasChildren === 1 };
   };
