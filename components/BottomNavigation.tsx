@@ -6,7 +6,7 @@ import { AppPage, UserProfile } from './data/types';
 interface BottomNavigationProps {
   currentPage: AppPage;
   onNavigate: (page: AppPage) => void;
-  currentUser: UserProfile | null; // Alterado para aceitar nulo (convidado)
+  currentUser: UserProfile | null;
 }
 
 export const BottomNavigation = ({ currentPage, onNavigate, currentUser }: BottomNavigationProps) => {
@@ -14,15 +14,13 @@ export const BottomNavigation = ({ currentPage, onNavigate, currentUser }: Botto
   const allNavItems = [
     { id: "feed" as AppPage, icon: Briefcase, label: "Negócios", roles: ['guest', 'member', 'admin'] },
     { id: "ranking" as AppPage, icon: Trophy, label: "Ranking", roles: ['member', 'admin'] },
-    { id: "search" as AppPage, icon: Search, label: "Buscar", roles: ['guest', 'member', 'admin'] },
+    { id: "search" as AppPage, icon: Search, label: "Buscar", roles: ['member', 'admin'] },
     { id: "chat" as AppPage, icon: MessageCircle, label: "Chat", roles: ['member', 'admin'] },
     { id: "profile" as AppPage, icon: User, label: "Perfil", roles: ['guest', 'member', 'admin'] },
     { id: "approval" as AppPage, icon: ShieldCheck, label: "Admin", roles: ['admin'] },
   ];
 
   const userRole = currentUser ? currentUser.role : 'guest';
-
-  // Filtra as abas que o usuário atual pode ver
   const navItems = allNavItems.filter(item => item.roles.includes(userRole));
 
   return (

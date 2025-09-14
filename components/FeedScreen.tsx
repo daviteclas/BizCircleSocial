@@ -13,12 +13,14 @@ import {
   View,
 } from 'react-native';
 import { sectors } from './data/mockData';
-import { BusinessDeal } from './data/types';
+import { BusinessDeal, UserProfile } from './data/types';
 
 interface FeedScreenProps {
   deals: BusinessDeal[];
   onCreatePost: () => void;
+  currentUser: UserProfile | null;
 }
+
 
 const BusinessDealCard = ({ item }: { item: BusinessDeal }) => (
     <View style={styles.premiumCard}>
@@ -67,10 +69,12 @@ const BusinessDealCard = ({ item }: { item: BusinessDeal }) => (
     </View>
   );
 
-export const FeedScreen = ({ deals, onCreatePost }: FeedScreenProps) => {
-  const { currentUser, isLoading } = useAuth();
+export const FeedScreen = ({ deals, onCreatePost, currentUser }: FeedScreenProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const { isLoading } = useAuth();
+
+  const userRole = currentUser ? currentUser.role : 'guest';
   
   // Filtra para mostrar apenas posts aprovados
   const approvedDeals = deals.filter(deal => deal.status === 'approved');
@@ -150,7 +154,7 @@ export const FeedScreen = ({ deals, onCreatePost }: FeedScreenProps) => {
         ListEmptyComponent={<Text style={styles.emptyText}>Nenhum negócio encontrado.</Text>}
       />
       
-      {currentUser?.role !== 'guest' && (
+      {userRole !== 'guest' && (
         <TouchableOpacity style={styles.fab} onPress={onCreatePost}>
           <Plus size={28} color="#1a1d2e" />
         </TouchableOpacity>
@@ -172,8 +176,19 @@ const styles = StyleSheet.create({
   badgeActive: { backgroundColor: '#eab308' },
   badgeText: { color: '#f0e6d2', fontSize: 12 },
   badgeTextActive: { color: '#1a1d2e', fontWeight: 'bold' },
-  listContainer: { paddingBottom: 80 },
-  premiumCard: { backgroundColor: '#232842', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(78, 88, 14, 0.5)', marginHorizontal: 16, marginTop: 16, padding: 16 },
+  listContainer: { 
+    paddingTop: 16,
+    paddingBottom: 96
+  },
+  premiumCard: { 
+    backgroundColor: '#232842', 
+    borderRadius: 12, 
+    borderWidth: 1, 
+    borderColor: 'rgba(78, 88, 14, 0.5)', 
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16 
+  },
   dealHeader: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 12, height: 60 },
   avatarLeft: { width: 60, height: 60, borderRadius: 30, borderWidth: 2, borderColor: 'rgba(234, 179, 8, 0.2)', zIndex: 1 },
   avatarRight: { width: 60, height: 60, borderRadius: 30, borderWidth: 2, borderColor: 'rgba(234, 179, 8, 0.2)', zIndex: 0 },

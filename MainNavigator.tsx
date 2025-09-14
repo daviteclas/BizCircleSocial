@@ -1,4 +1,4 @@
-import { addExperiencePoints, getDeals, getUsers, insertDeal, setupDatabase, updateDealStatus } from '@/components/data/database';
+import { addExperiencePoints, getDeals, getUsers, insertDeal, setupDatabase, updateDatabaseSchema, updateDealStatus } from '@/components/data/database';
 import { AppPage, BusinessDeal, UserProfile } from '@/components/data/types';
 import { RankingScreen } from '@/components/RankingScreen';
 import React, { useEffect, useState } from 'react';
@@ -48,7 +48,7 @@ export default function MainNavigator() {
 
   useEffect(() => {
     async function initialize() {
-    //   await updateDatabaseSchema(); 
+      await updateDatabaseSchema();
 
     //   await resetDatabase(); 
       await setupDatabase();
@@ -60,6 +60,13 @@ export default function MainNavigator() {
     }
     initialize();
   }, []);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setCurrentPage('feed');
+      setAuthPage('guest'); 
+    }
+  }, [currentUser]);
 
 
   // Função para lidar com ações que um convidado não pode fazer
@@ -164,7 +171,7 @@ export default function MainNavigator() {
         if (userRole !== 'admin') return <BlockedScreen message="Esta área é restrita para administradores." />;
         return <ApprovalScreen deals={businessDeals} onApprove={handleApprovePost} onReject={handleRejectPost} />;
       case 'feed':
-        return <FeedScreen deals={businessDeals} onCreatePost={handleNavigateCreatePost} />;
+        return <FeedScreen deals={businessDeals} onCreatePost={handleNavigateCreatePost} currentUser={currentUser} />;
       case 'search':
         return <SearchScreen onSelectUser={handleSelectUser} />;
       case 'chat':
@@ -181,7 +188,7 @@ export default function MainNavigator() {
         // Renderização normal para membros/admins
         return currentPage === 'ranking' ? <RankingScreen users={allUsers} /> : <ChatScreen />;
       default:
-        return <FeedScreen deals={businessDeals} onCreatePost={handleNavigateCreatePost} />;
+        return <FeedScreen deals={businessDeals} onCreatePost={handleNavigateCreatePost} currentUser={currentUser} />;
     }
   };
 
