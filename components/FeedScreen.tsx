@@ -1,3 +1,4 @@
+import { Stack } from 'expo-router';
 import { Handshake, Plus } from 'lucide-react-native';
 import React from 'react';
 import {
@@ -50,6 +51,7 @@ export const FeedScreen = ({ deals, onCreatePost }: FeedScreenProps) => {
   const currentUser = mockUsers.find(u => u.id === CURRENT_USER_ID);
   return (
     <>
+      <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Negócios Fechados</Text>
         <Text style={styles.headerSubtitle}>Conexões que geram resultados</Text>
