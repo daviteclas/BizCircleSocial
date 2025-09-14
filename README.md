@@ -1,50 +1,102 @@
-# Welcome to your Expo app 👋
+BizCircleSocial - Comunidade de Negócios
+🚀 Sobre o Projeto
+BizCircleSocial é um aplicativo móvel de nicho, desenvolvido em React Native, que funciona como uma rede social exclusiva para empresários. O objetivo é criar um ambiente para networking, onde os membros possam postar negócios fechados, interagir com a comunidade e ser reconhecidos através de um sistema de gamificação.
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+O aplicativo foi construído com uma arquitetura robusta que inclui um banco de dados local, gerenciamento de estado global e um sistema de permissões baseado em papéis de usuário.
 
-## Get started
+✨ Funcionalidades Principais
+Sistema de Autenticação Completo:
 
-1. Install dependencies
+Fluxo de Login e Cadastro.
 
-   ```bash
-   npm install
-   ```
+Sessão de usuário persistente (o usuário continua logado após fechar o app).
 
-2. Start the app
+Controle de Acesso por Papel (Roles):
 
-   ```bash
-   npx expo start
-   ```
+Convidado: Visualização limitada do feed e do perfil. Não pode interagir.
 
-In the output, you'll find options to open the app in a
+Membro: Acesso completo às funcionalidades sociais após aprovação.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Admin: Acesso total, incluindo painéis de moderação.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Fluxo de Aprovação de Cadastros e Posts:
 
-## Get a fresh project
+Novos cadastros e posts de negócios entram em uma fila de análise.
 
-When you're ready, run:
+Um painel de administrador exclusivo para aprovar ou rejeitar conteúdo, garantindo a qualidade da comunidade.
 
-```bash
-npm run reset-project
-```
+Feed de Negócios Dinâmico:
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Exibição de negócios fechados entre membros.
 
-## Learn more
+Filtros por categoria e busca por texto.
 
-To learn more about developing your project with Expo, look at the following resources:
+Sistema de Gamificação e Ranking:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Usuários ganham pontos de experiência (XP) ao fechar negócios.
 
-## Join the community
+Uma tela de Ranking exibe os membros mais ativos em um pódio estilizado.
 
-Join our community of developers creating universal apps.
+Banco de Dados Local:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Utiliza SQLite (expo-sqlite) para armazenar todos os dados diretamente no dispositivo.
+
+Inclui um sistema de "migração" que atualiza a estrutura do banco de dados sem perder dados.
+
+🛠️ Tecnologias Utilizadas
+Framework: React Native com Expo
+
+Linguagem: TypeScript
+
+Banco de Dados: SQLite (expo-sqlite)
+
+Gerenciamento de Estado Global: React Context API
+
+Navegação: Lógica de navegação customizada (baseada em estado)
+
+Componentes Nativos: react-native (View, Text, FlatList, etc.)
+
+Ícones: lucide-react-native
+
+Seleção de Imagem: expo-image-picker
+
+Armazenamento Local: @react-native-async-storage/async-storage
+
+⚙️ Instalação e Execução
+Para rodar este projeto localmente, você precisará de um ambiente de desenvolvimento React Native configurado, incluindo o Android Studio (para o emulador Android) ou Xcode (para o simulador iOS).
+
+Clone o repositório:
+
+git clone [https://github.com/seu-usuario/BizCircleSocial.git](https://github.com/seu-usuario/BizCircleSocial.git)
+cd BizCircleSocial
+
+Instale as dependências:
+
+npm install
+
+Crie e instale o Build de Desenvolvimento:
+Como o projeto usa bibliotecas nativas (expo-sqlite), o aplicativo padrão Expo Go não funcionará. Você precisa criar uma versão personalizada do app.
+
+# Crie o build para Android (ou --platform ios)
+npx eas build --profile development --platform android
+
+Após o processo terminar, baixe e instale o arquivo .apk no seu emulador ou dispositivo Android.
+
+Inicie o servidor de desenvolvimento:
+Use o comando --dev-client para conectar-se ao seu aplicativo personalizado.
+
+npx expo start --dev-client
+
+Abra o aplicativo:
+No seu emulador ou celular, abra o aplicativo BizCircleSocial. Ele deve se conectar automaticamente ao servidor Metro que está rodando no seu terminal.
+
+👨‍💻 Como Testar as Funcionalidades de Admin
+Para testar as funcionalidades de administrador, como o painel de aprovação:
+
+Abra o arquivo src/data/mockData.ts.
+
+Altere a constante CURRENT_USER_ID para o ID de um usuário com role: 'admin'. Por exemplo:
+
+export const CURRENT_USER_ID = '3'; // ID do Roberto Lima (Admin)
+
+Salve o arquivo. O aplicativo irá recarregar com as permissões de administrador.
