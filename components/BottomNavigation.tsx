@@ -1,4 +1,4 @@
-import { Briefcase, MessageCircle, Search, ShieldCheck, User } from 'lucide-react-native';
+import { Briefcase, MessageCircle, Search, ShieldCheck, Trophy, User } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AppPage, UserProfile } from './data/types';
@@ -14,7 +14,8 @@ export const BottomNavigation = ({ currentPage, onNavigate, currentUser }: Botto
     { id: "feed" as AppPage, icon: Briefcase, label: "Negócios" },
     { id: "search" as AppPage, icon: Search, label: "Buscar" },
     { id: "chat" as AppPage, icon: MessageCircle, label: "Chat" },
-    { id: "profile" as AppPage, icon: User, label: "Perfil" }
+    { id: "profile" as AppPage, icon: User, label: "Perfil" },
+    { id: "ranking" as AppPage, icon: Trophy, label: "Ranking" },
   ];
 
   if (currentUser?.role === 'admin') {

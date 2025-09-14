@@ -1,7 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 // Adicionei a importação do ícone de voltar que estava faltando
-import { ArrowLeft, MapPin, Building2, TrendingUp, Users, Heart, MessageCircle, Calendar, Timer } from 'lucide-react-native';
+import { ArrowLeft, Building2, Calendar, Heart, MapPin, MessageCircle, Star, Timer, TrendingUp, Users } from 'lucide-react-native';
 import { mockUsers } from './data/mockData';
 
 interface ProfileScreenProps {
@@ -20,10 +20,8 @@ const InfoRow = ({ icon: Icon, label, value }: any) => (
 );
 
 export const ProfileScreen = ({ userId, onGoBack }: ProfileScreenProps) => {
-  const user = mockUsers.find(u => u.id === userId) || mockUsers.find(u => u.id === 'current-user');
+  const user = mockUsers.find(u => u.id === userId);
 
-  // CORREÇÃO: Adicionamos esta verificação
-  // Se o usuário não for encontrado, exibe uma mensagem e não tenta renderizar o resto.
   if (!user) {
     return (
       <View style={styles.container}>
@@ -37,7 +35,6 @@ export const ProfileScreen = ({ userId, onGoBack }: ProfileScreenProps) => {
     
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Adicionado o botão de voltar que não estava no seu código */}
       {userId !== 'current-user' && (
         <TouchableOpacity onPress={onGoBack} style={styles.backButton}>
           <ArrowLeft size={24} color="#f5d142" />
@@ -70,6 +67,10 @@ export const ProfileScreen = ({ userId, onGoBack }: ProfileScreenProps) => {
         <View style={styles.sectionHeader}>
           <Building2 size={22} color="#eab308" />
           <Text style={styles.sectionTitle}>Informações Profissionais</Text>
+        </View>
+        <View style={styles.infoValueRow}>
+          <Star style={styles.classeText} size={16} color="#eab308" />
+          <Text style={styles.classeText}>{user.classe.charAt(0).toUpperCase() + user.classe.slice(1)}</Text>
         </View>
         <View style={styles.infoGrid}>
           <InfoRow icon={TrendingUp} label="Faturamento" value={user.revenue} />
@@ -125,4 +126,11 @@ const styles = StyleSheet.create({
   infoLabel: { color: '#a1a1aa', fontSize: 12, textTransform: 'uppercase', marginBottom: 4 },
   infoValueRow: { flexDirection: 'row', alignItems: 'center' },
   infoValue: { color: '#f0e6d2', fontSize: 14, fontWeight: '500', marginLeft: 6 },
+  classeText: {
+    color: '#eab308',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 6,
+    marginBottom: 16,
+  },
 });

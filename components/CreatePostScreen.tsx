@@ -2,6 +2,7 @@ import * as ImagePicker from 'expo-image-picker'; // 1. Importe o ImagePicker
 import { ArrowLeft, Camera, Send, UserPlus } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert, FlatList, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { sectors as categories } from './data/mockData';
 import { UserProfile } from './data/types';
 
 interface CreatePostScreenProps {
@@ -16,7 +17,7 @@ export const CreatePostScreen = ({ currentUser, allUsers, onGoBack, onSubmit }: 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [value, setValue] = useState('');
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState<string>(''); 
   const [partner, setPartner] = useState<UserProfile | null>(null);
   const [isModalVisible, setModalVisible] = useState(false);
 
@@ -53,20 +54,15 @@ export const CreatePostScreen = ({ currentUser, allUsers, onGoBack, onSubmit }: 
   };
 
   const handleSubmit = () => {
-    if (!title || !description || !partner) {
-      alert('Por favor, preencha o título, descrição e selecione um parceiro.');
+    // Adiciona validação para a categoria
+    if (!title || !description || !partner || !category) {
+      alert('Por favor, preencha todos os campos, incluindo a categoria e um parceiro.');
       return;
     }
     const newDeal = {
-      partyOne: { name: currentUser.name, company: currentUser.company, avatar: currentUser.avatar },
-      partyTwo: { name: partner.name, company: partner.company, avatar: partner.avatar },
-      deal: {
-        title,
-        description,
-        category,
-        value,
-        image: imageBase64, // Adiciona a string Base64 ao objeto do negócio
-      },
+      partyOne: { id: currentUser.id, name: currentUser.name, company: currentUser.company, avatar: currentUser.avatar },
+      partyTwo: { id: partner.id, name: partner.name, company: partner.company, avatar: partner.avatar },
+      deal: { title, description, category, value, image: imageBase64 },
       stats: { congrats: 0, shares: 0 },
     };
     onSubmit(newDeal);
@@ -74,7 +70,7 @@ export const CreatePostScreen = ({ currentUser, allUsers, onGoBack, onSubmit }: 
 
   return (
     <>
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <TouchableOpacity onPress={onGoBack} style={styles.backButton}>
             <ArrowLeft size={24} color="#f5d142" />
@@ -89,8 +85,16 @@ export const CreatePostScreen = ({ currentUser, allUsers, onGoBack, onSubmit }: 
           <Text style={styles.label}>Descrição</Text>
           <TextInput style={[styles.input, styles.textarea]} multiline placeholder="Descreva o negócio fechado..." placeholderTextColor="#555" value={description} onChangeText={setDescription} />
           
-          <Text style={styles.label}>Categoria</Text>
-          <TextInput style={styles.input} placeholder="Ex: Investimento (Seed)" placeholderTextColor="#555" value={category} onChangeText={setCategory} />
+        <Text style={styles.label}>Categoria do Negócio</Text>
+        <View style={styles.badgeSelectorContainer}>
+            {categories.map((cat) => (
+                <TouchableOpacity key={cat} onPress={() => setCategory(cat)}>
+                    <View style={[styles.badge, category === cat ? styles.badgeActive : {}]}>
+                        <Text style={[styles.badgeText, category === cat ? styles.badgeTextActive : {}]}>{cat}</Text>
+                    </View>
+                </TouchableOpacity>
+            ))}
+        </View>
 
           <Text style={styles.label}>Valor (opcional)</Text>
           <TextInput style={styles.input} placeholder="Ex: R$ 100.000" placeholderTextColor="#555" value={value} onChangeText={setValue} />
@@ -183,5 +187,28 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderWidth: 1,
     borderColor: '#2d325a'
+  },
+
+  badgeSelectorContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  badge: { 
+    backgroundColor: '#2d325a', 
+    paddingVertical: 8, 
+    paddingHorizontal: 16, 
+    borderRadius: 16,
+  },
+  badgeActive: { 
+    backgroundColor: '#eab308' 
+  },
+  badgeText: { 
+    color: '#f0e6d2', 
+    fontSize: 12 
+  },
+  badgeTextActive: { 
+    color: '#1a1d2e', 
+    fontWeight: 'bold' 
   },
 });
