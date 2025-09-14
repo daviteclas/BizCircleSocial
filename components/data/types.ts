@@ -8,6 +8,9 @@ export type PostStatus = 'pending' | 'approved' | 'rejected';
 // Define o perfil básico de um usuário/empresa
 export interface UserProfile {
   id: string;
+  email: string;     
+  password: string; 
+  status: 'pending' | 'approved' | 'rejected';
   name: string;
   company: string;
   location: string;

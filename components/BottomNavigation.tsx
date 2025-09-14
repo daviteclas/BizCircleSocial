@@ -6,21 +6,24 @@ import { AppPage, UserProfile } from './data/types';
 interface BottomNavigationProps {
   currentPage: AppPage;
   onNavigate: (page: AppPage) => void;
-  currentUser: UserProfile | undefined;
+  currentUser: UserProfile | null; // Alterado para aceitar nulo (convidado)
 }
 
 export const BottomNavigation = ({ currentPage, onNavigate, currentUser }: BottomNavigationProps) => {
-  const navItems = [
-    { id: "feed" as AppPage, icon: Briefcase, label: "Negócios" },
-    { id: "search" as AppPage, icon: Search, label: "Buscar" },
-    { id: "chat" as AppPage, icon: MessageCircle, label: "Chat" },
-    { id: "profile" as AppPage, icon: User, label: "Perfil" },
-    { id: "ranking" as AppPage, icon: Trophy, label: "Ranking" },
+  // Define todas as abas possíveis
+  const allNavItems = [
+    { id: "feed" as AppPage, icon: Briefcase, label: "Negócios", roles: ['guest', 'member', 'admin'] },
+    { id: "ranking" as AppPage, icon: Trophy, label: "Ranking", roles: ['member', 'admin'] },
+    { id: "search" as AppPage, icon: Search, label: "Buscar", roles: ['guest', 'member', 'admin'] },
+    { id: "chat" as AppPage, icon: MessageCircle, label: "Chat", roles: ['member', 'admin'] },
+    { id: "profile" as AppPage, icon: User, label: "Perfil", roles: ['guest', 'member', 'admin'] },
+    { id: "approval" as AppPage, icon: ShieldCheck, label: "Admin", roles: ['admin'] },
   ];
 
-  if (currentUser?.role === 'admin') {
-    navItems.push({ id: "approval" as AppPage, icon: ShieldCheck, label: "Admin" });
-  }
+  const userRole = currentUser ? currentUser.role : 'guest';
+
+  // Filtra as abas que o usuário atual pode ver
+  const navItems = allNavItems.filter(item => item.roles.includes(userRole));
 
   return (
     <View style={styles.container}>
@@ -45,26 +48,7 @@ export const BottomNavigation = ({ currentPage, onNavigate, currentUser }: Botto
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    height: 80,
-    backgroundColor: '#1e223b',
-    borderTopWidth: 1,
-    borderTopColor: '#2d325a',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  button: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  label: {
-    fontSize: 10,
-    marginTop: 4,
-  },
+  container: { flexDirection: 'row', height: 80, backgroundColor: '#1e223b', borderTopWidth: 1, borderTopColor: '#2d325a', justifyContent: 'space-around', alignItems: 'center' },
+  button: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  label: { fontSize: 10, marginTop: 4 },
 });

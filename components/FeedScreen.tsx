@@ -1,3 +1,4 @@
+import { useAuth } from '@/context/AuthContext';
 import { Stack } from 'expo-router';
 import { Award, Handshake, MessageCircle, Plus, Search, Share2 } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -11,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { CURRENT_USER_ID, mockUsers, sectors } from './data/mockData';
+import { sectors } from './data/mockData';
 import { BusinessDeal } from './data/types';
 
 interface FeedScreenProps {
@@ -67,14 +68,13 @@ const BusinessDealCard = ({ item }: { item: BusinessDeal }) => (
   );
 
 export const FeedScreen = ({ deals, onCreatePost }: FeedScreenProps) => {
+  const { currentUser, isLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   
   // Filtra para mostrar apenas posts aprovados
   const approvedDeals = deals.filter(deal => deal.status === 'approved');
   
-  const currentUser = mockUsers.find(u => u.id === CURRENT_USER_ID);
-
   // Nova função para lidar com a seleção de categorias
   const handleSelectCategory = (category: string) => {
     // Se a categoria já está no array, remova-a
