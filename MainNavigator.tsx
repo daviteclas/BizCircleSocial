@@ -1,4 +1,4 @@
-import { addExperiencePoints, getDeals, getPendingUsers, getUsers, insertDeal, setupDatabase, updateDatabaseSchema, updateDealStatus, updateUserClasse, updateUserStatus } from '@/components/data/database';
+import { addExperiencePoints, getDeals, getPendingUsers, getUsers, insertDeal, resetDatabase, setupDatabase, updateDatabaseSchema, updateDealStatus, updateUserClasse, updateUserStatus } from '@/components/data/database';
 import { AppPage, BusinessDeal, UserProfile } from '@/components/data/types';
 import { RankingScreen } from '@/components/RankingScreen';
 import React, { useEffect, useState } from 'react';
@@ -88,6 +88,7 @@ export default function MainNavigator() {
     useEffect(() => {
         async function initialize() {
             await updateDatabaseSchema();
+            await resetDatabase(); 
             await setupDatabase();
             await refreshData();
             setDbInitialized(true);
