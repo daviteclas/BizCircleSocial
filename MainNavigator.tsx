@@ -1,9 +1,9 @@
-import { addExperiencePoints, getDeals, getUsers, insertDeal, setupDatabase, updateDatabaseSchema, updateDealStatus } from '@/components/data/database';
+import { addExperiencePoints, getDeals, getPendingUsers, getUsers, insertDeal, resetDatabase, setupDatabase, updateDatabaseSchema, updateDealStatus, updateUserClasse, updateUserStatus } from '@/components/data/database';
 import { AppPage, BusinessDeal, UserProfile } from '@/components/data/types';
 import { RankingScreen } from '@/components/RankingScreen';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
-import { ApprovalScreen } from './components/ApprovalScreen';
+import { AdminPanelScreen } from './components/AdminPanelScreen';
 import { BottomNavigation } from './components/BottomNavigation';
 import { ChatScreen } from './components/ChatScreen';
 import { CreatePostScreen } from './components/CreatePostScreen';
@@ -14,6 +14,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { ProfileScreen } from './components/ProfileScreen';
 import { SearchScreen } from './components/SearchScreen';
 import { SignupScreen } from './components/SignupScreen';
+import { UserReportScreen } from './components/UserReportScreen';
 import { useAuth } from './context/AuthContext';
 
 // Um componente simples para telas bloqueadas
@@ -25,19 +26,72 @@ const BlockedScreen = ({ message }: { message: string }) => (
 );
 
 export default function MainNavigator() {
-  const { currentUser, isLoading } = useAuth();
+  const { currentUser, isLoading, signup } = useAuth(); 
   const [dbInitialized, setDbInitialized] = useState(false);
   const [currentPage, setCurrentPage] = useState<AppPage>('feed');
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [businessDeals, setBusinessDeals] = useState<BusinessDeal[]>([]);
+  const [pendingUsers, setPendingUsers] = useState<UserProfile[]>([]);
+  const [viewingUserReportId, setViewingUserReportId] = useState<string | null>(null);
+
+  const handleViewUserReport = (userId: string) => {
+    setViewingUserReportId(userId);
+  };
+  const handleGoBackFromReport = () => {
+    setViewingUserReportId(null);
+  };
+
+  if (viewingUserReportId) {
+    return (
+        <SafeAreaView style={styles.container}>
+            <UserReportScreen userId={viewingUserReportId} onGoBack={handleGoBackFromReport} />
+        </SafeAreaView>
+    );
+  }
+
+  // Função para recarregar todos os dados do banco
+  const refreshData = async () => {
+    const [deals, users, pUsers] = await Promise.all([getDeals(), getUsers(), getPendingUsers()]);
+    setBusinessDeals(deals);
+    setAllUsers(users);
+    setPendingUsers(pUsers);
+  };
+
+  const handleSignupSubmit = async (userData: any) => {
+    // Chama a função de signup do AuthContext
+    const result = await signup(userData);
+
+    // O Alert e a lógica de navegação ficam aqui
+    Alert.alert(result.success ? "Sucesso!" : "Erro no Cadastro", result.message);
+
+    if (result.success) {
+      await refreshData(); // Recarrega os dados para atualizar a lista de pendentes
+      setAuthPage('guest'); // Volta para a tela de perfil do convidado
+    }
+  };
+
+  const handleUserApproval = async (userId: string, classe: 'membro' | 'infinity' | 'sócio') => {
+    await updateUserClasse(userId, classe);
+    await updateUserStatus(userId, 'approved');
+    await refreshData(); // Recarrega todos os dados
+  };
+
+  const handleUserRejection = async (userId: string) => {
+    await updateUserStatus(userId, 'rejected'); // Ou você pode deletar o usuário
+    await refreshData(); // Recarrega todos os dados
+  };
 
   // Estado para controlar a navegação dentro da aba de perfil do convidado
   const [authPage, setAuthPage] = useState<'guest' | 'login' | 'signup'>('guest');
   
   const handleSelectUser = (userId: string) => {
     if (!currentUser) {
-      handleGuestAction();
+      Alert.alert(
+        "Acesso Exclusivo para Membros",
+        "Crie uma conta ou faça login para interagir com os membros.",
+        [{ text: "OK", onPress: () => setCurrentPage('profile') }]
+      );
     } else {
       setViewingUserId(userId);
     }
@@ -49,13 +103,9 @@ export default function MainNavigator() {
   useEffect(() => {
     async function initialize() {
       await updateDatabaseSchema();
-
     //   await resetDatabase(); 
       await setupDatabase();
-      
-      const [dealsFromDb, usersFromDb] = await Promise.all([getDeals(), getUsers()]);
-      setBusinessDeals(dealsFromDb);
-      setAllUsers(usersFromDb);
+      await refreshData();
       setDbInitialized(true);
     }
     initialize();
@@ -64,7 +114,7 @@ export default function MainNavigator() {
   useEffect(() => {
     if (!currentUser) {
       setCurrentPage('feed');
-      setAuthPage('guest'); 
+      setAuthPage('guest');
     }
   }, [currentUser]);
 
@@ -117,7 +167,7 @@ export default function MainNavigator() {
   };
 
   if (isLoading || !dbInitialized) {
-    return <View style={styles.container}><ActivityIndicator size="large" color="#eab308"/></View>;
+    return <View style={styles.container}><ActivityIndicator size="large" color="#eab308" /></View>;
   }
 
   // Se for convidado (ninguém logado)
@@ -128,7 +178,7 @@ export default function MainNavigator() {
                 <StatusBar barStyle="light-content" />
                 {authPage === 'guest' && <GuestProfileScreen onNavigateToLogin={() => setAuthPage('login')} onNavigateToSignup={() => setAuthPage('signup')} />}
                 {authPage === 'login' && <LoginScreen onGoBack={() => setAuthPage('guest')} />}
-                {authPage === 'signup' && <SignupScreen onGoBack={() => setAuthPage('guest')} />}
+                {authPage === 'signup' && <SignupScreen onGoBack={() => setAuthPage('guest')} onSubmit={handleSignupSubmit} />}
             </SafeAreaView>
         );
     }
@@ -136,7 +186,7 @@ export default function MainNavigator() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="light-content" />
-        <FeedScreen deals={businessDeals} onCreatePost={() => {}}/>
+        <FeedScreen deals={businessDeals} onCreatePost={() => {}} currentUser={currentUser} />
         <BottomNavigation 
             currentPage={currentPage} 
             onNavigate={setCurrentPage}
@@ -149,16 +199,31 @@ export default function MainNavigator() {
   if (viewingUserId) {
     return (
       <SafeAreaView style={styles.container}>
-        <ProfileScreen userId={viewingUserId} onGoBack={() => setViewingUserId(null)} />
+        <ProfileScreen 
+            userId={viewingUserId} 
+            onGoBack={handleGoBack} 
+            onViewReport={handleViewUserReport}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // Se estiver no fluxo de login/cadastro, renderiza apenas essa tela
+  if (!currentUser && (authPage === 'login' || authPage === 'signup')) {
+    return (
+      <SafeAreaView style={styles.container}>
+        {authPage === 'login' && <LoginScreen onGoBack={() => setAuthPage('guest')} />}
+        {/* Passa a função 'handleSignupSubmit' corrigida */}
+        {authPage === 'signup' && <SignupScreen onGoBack={() => setAuthPage('guest')} onSubmit={handleSignupSubmit} />}
       </SafeAreaView>
     );
   }
 
   const renderPage = () => {
     const userRole = currentUser ? currentUser.role : 'guest';
+    
     switch (currentPage) {
       case 'createPost':
-        // Passa o usuário atual e a lista de todos os usuários para a tela de criação
         return (
           <CreatePostScreen 
             currentUser={currentUser!}
@@ -167,26 +232,48 @@ export default function MainNavigator() {
             onSubmit={handleSubmitPost} 
           />
         );
-      case 'approval':
-        if (userRole !== 'admin') return <BlockedScreen message="Esta área é restrita para administradores." />;
-        return <ApprovalScreen deals={businessDeals} onApprove={handleApprovePost} onReject={handleRejectPost} />;
       case 'feed':
         return <FeedScreen deals={businessDeals} onCreatePost={handleNavigateCreatePost} currentUser={currentUser} />;
-      case 'search':
-        return <SearchScreen onSelectUser={handleSelectUser} />;
-      case 'chat':
-        return <ChatScreen />;
+      
       case 'profile':
         if (userRole === 'guest') {
-          // Aqui podemos adicionar as telas de login/cadastro depois
-          return <GuestProfileScreen onNavigateToLogin={() => {}} onNavigateToSignup={() => {}} />;
+          return <GuestProfileScreen onNavigateToLogin={() => setAuthPage('login')} onNavigateToSignup={() => setAuthPage('signup')} />;
         }
-        return <ProfileScreen userId={currentUser.id} onGoBack={() => {}} />;
+        // CORREÇÃO: Adicionado o 'return' que estava faltando
+        return (
+            <ProfileScreen 
+                userId={currentUser.id} 
+                onGoBack={handleGoBack} 
+                onViewReport={handleViewUserReport}
+            />
+        );
+      // --- LÓGICA CORRIGIDA PARA TELAS RESTRITAS ---
+      case 'search':
+        if (userRole === 'guest') return <BlockedScreen message="Apenas membros podem ver esta área." />;
+        return <SearchScreen onSelectUser={handleSelectUser} />;
+      
       case 'ranking':
+        if (userRole === 'guest') return <BlockedScreen message="Apenas membros podem ver esta área." />;
+        return <RankingScreen users={allUsers} />;
+
       case 'chat':
-        if (userRole === 'guest') return <BlockedScreen message="Apenas membros podem ver o ranking e o chat." />;
-        // Renderização normal para membros/admins
-        return currentPage === 'ranking' ? <RankingScreen users={allUsers} /> : <ChatScreen />;
+        if (userRole === 'guest') return <BlockedScreen message="Apenas membros podem ver esta área." />;
+        return <ChatScreen />;
+
+      case 'approval':
+        if (userRole !== 'admin') return <BlockedScreen message="Esta área é restrita para administradores." />;
+        return (
+          <AdminPanelScreen
+            pendingDeals={businessDeals.filter(d => d.status === 'pending')}
+            pendingUsers={pendingUsers}
+            onRefresh={refreshData}
+            onApprovePost={handleApprovePost}
+            onRejectPost={handleRejectPost}
+            onApproveUser={handleUserApproval}
+            onRejectUser={handleUserRejection}
+          />
+        );
+        
       default:
         return <FeedScreen deals={businessDeals} onCreatePost={handleNavigateCreatePost} currentUser={currentUser} />;
     }

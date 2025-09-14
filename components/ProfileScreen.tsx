@@ -2,12 +2,13 @@ import React from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 // Adicionei a importação do ícone de voltar que estava faltando
 import { useAuth } from '@/context/AuthContext';
-import { ArrowLeft, Building2, Calendar, Heart, LogOut, MapPin, MessageCircle, Star, Timer, TrendingUp, Users } from 'lucide-react-native';
+import { ArrowLeft, Building2, Calendar, FileText, Heart, LogOut, MapPin, MessageCircle, Star, Timer, TrendingUp, Users } from 'lucide-react-native';
 import { mockUsers } from './data/mockData';
 
 interface ProfileScreenProps {
   userId: string;
   onGoBack: () => void;
+  onViewReport: (userId: string) => void;
 }
 
 const InfoRow = ({ icon: Icon, label, value }: any) => (
@@ -20,12 +21,14 @@ const InfoRow = ({ icon: Icon, label, value }: any) => (
   </View>
 );
 
-export const ProfileScreen = ({ userId, onGoBack }: ProfileScreenProps) => {
-  const { currentUser, logout } = useAuth(); // Pegue o usuário logado e a função de logout
-  const userToDisplay = mockUsers.find(u => u.id === userId); // Encontra o usuário a ser exibido
+export const ProfileScreen = ({ userId, onGoBack, onViewReport }: ProfileScreenProps) => {
+  const { currentUser, logout } = useAuth();
+  const userToDisplay = mockUsers.find(u => u.id === userId);
 
   // Verifica se o perfil que estamos vendo é o do usuário atualmente logado
   const isOwnProfile = currentUser?.id === userId;
+
+  const isAdminViewing = currentUser?.role === 'admin';
 
   if (!userToDisplay) {
     return (
@@ -69,6 +72,15 @@ export const ProfileScreen = ({ userId, onGoBack }: ProfileScreenProps) => {
             <MessageCircle size={20} color="#1a1d2e" />
             <Text style={styles.premiumButtonText}>Conectar</Text>
           </TouchableOpacity>
+          {isAdminViewing && !isOwnProfile && (
+            <TouchableOpacity 
+              style={styles.outlineButton}
+              onPress={() => onViewReport(userToDisplay.id)}
+            >
+              console.log(userToDisplay.id);
+              <FileText size={20} color="#f0e6d2" />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.outlineButton}>
             <Heart size={20} color="#f0e6d2" />
           </TouchableOpacity>

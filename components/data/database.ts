@@ -9,9 +9,9 @@ async function openDb() {
   return SQLite.openDatabaseAsync('membersBook.db');
 }
 
+// A função setupDatabase está correta e não precisa de alterações.
 export const setupDatabase = async () => {
   const db = await openDb();
-  
   await db.execAsync(`
     PRAGMA journal_mode = WAL;
     CREATE TABLE IF NOT EXISTS users (
@@ -110,6 +110,7 @@ export const getDeals = async (): Promise<BusinessDeal[]> => {
     await setupDatabase();
   };
   
+  // CORREÇÃO AQUI
   export const getUserById = async (userId: string): Promise<UserProfile | null> => {
     const db = await openDb();
     const row = await db.getFirstAsync<UserFromDB>('SELECT * FROM users WHERE id = ?', userId);
@@ -117,6 +118,7 @@ export const getDeals = async (): Promise<BusinessDeal[]> => {
     return { ...row, hasChildren: row.hasChildren === 1 };
   };
   
+  // CORREÇÃO AQUI
   export const findUserByEmailAndPassword = async (email: string, pass: string): Promise<UserProfile | null> => {
     const db = await openDb();
     const row = await db.getFirstAsync<UserFromDB>(
@@ -132,7 +134,25 @@ export const getDeals = async (): Promise<BusinessDeal[]> => {
       const id = `user_${Date.now()}`;
       await db.runAsync(
           'INSERT INTO users (id, email, password, name, company, location, sector, avatar, bio, revenue, age, hasChildren, hobbies, experience, brands, role, classe, experiencePoints, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          id, userData.email, userData.password, userData.name, userData.company, userData.location, userData.sector, userData.avatar, userData.bio, userData.revenue, userData.age, userData.hasChildren ? 1: 0, userData.hobbies, userData.experience, userData.brands, userData.role, userData.classe, userData.experiencePoints, userData.status
+        id,
+        userData.email.toLowerCase(),
+        userData.password || null,
+        userData.name || null,
+        userData.company || null,
+        userData.location || null,
+        userData.sector || null,
+        userData.avatar || null,
+        userData.bio || null,
+        userData.revenue || null,
+        userData.age || 0,
+        userData.hasChildren ? 1 : 0,
+        userData.hobbies || null,
+        userData.experience || null,
+        userData.brands || null,
+        userData.role || null,
+        userData.classe || null,
+        userData.experiencePoints || null,
+        userData.status || null
       );
   };
   
@@ -160,9 +180,34 @@ export const getDeals = async (): Promise<BusinessDeal[]> => {
     console.log("Verificação do schema do banco de dados concluída.");
   };
 
+  // CORREÇÃO AQUI
   export const findUserByEmail = async (email: string): Promise<UserProfile | null> => {
     const db = await openDb();
     const row = await db.getFirstAsync<UserFromDB>('SELECT * FROM users WHERE email = ?', email.toLowerCase());
     if (!row) return null;
     return { ...row, hasChildren: row.hasChildren === 1 };
   };
+
+  // Busca todos os usuários com status 'pending'
+  export const getPendingUsers = async (): Promise<UserProfile[]> => {
+  const db = await openDb();
+  const allRows = await db.getAllAsync<Omit<UserProfile, 'hasChildren'> & { hasChildren: number }>(
+    "SELECT * FROM users WHERE status = 'pending'"
+  );
+  return allRows.map(row => ({
+    ...row,
+    hasChildren: row.hasChildren === 1,
+  }));
+};
+
+// Atualiza o status de um usuário (para 'approved' ou 'rejected')
+export const updateUserStatus = async (userId: string, status: 'approved' | 'rejected') => {
+  const db = await openDb();
+  await db.runAsync('UPDATE users SET status = ? WHERE id = ?', status, userId);
+};
+
+// Atualiza a classe de um usuário
+export const updateUserClasse = async (userId: string, classe: 'membro' | 'infinity' | 'sócio') => {
+  const db = await openDb();
+  await db.runAsync('UPDATE users SET classe = ? WHERE id = ?', classe, userId);
+};
