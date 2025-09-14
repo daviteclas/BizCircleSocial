@@ -1,3 +1,10 @@
+// Adicione este tipo aqui para centralizar a navegação
+export type AppPage = "feed" | "explore" | "search" | "chat" | "profile" | "approval" | "createPost";
+
+// Adicione 'role' e 'status'
+export type UserRole = 'guest' | 'member' | 'admin';
+export type PostStatus = 'pending' | 'approved' | 'rejected';
+
 // Define o perfil básico de um usuário/empresa
 export interface UserProfile {
   id: string;
@@ -13,6 +20,7 @@ export interface UserProfile {
   hobbies: string;
   experience: string;
   brands: string;
+  role: UserRole;
 }
 
 // Define a estrutura para um post de negócio fechado no feed
@@ -31,6 +39,8 @@ export interface BusinessDeal {
     congrats: number;
     shares: number;
   };
+  status: PostStatus; 
+  createdAt: number; 
 }
 
 // Define a estrutura para a lista de chats

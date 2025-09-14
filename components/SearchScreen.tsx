@@ -1,15 +1,15 @@
+import { Building2, MapPin, Search } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-  StyleSheet,
-  View,
-  Text,
-  TextInput,
   FlatList,
   Image,
-  TouchableOpacity,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Search, MapPin, Building2 } from 'lucide-react-native';
 import { mockUsers, sectors } from './data/mockData';
 
 interface SearchScreenProps {
